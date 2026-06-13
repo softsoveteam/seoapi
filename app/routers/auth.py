@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 import httpx
 
-from app.config import settings
+from app.config import resolved_frontend_url, resolved_google_redirect_uri, settings
 from app.database import get_db
 from app.dependencies import get_current_user
 from app.models import User
@@ -21,7 +21,7 @@ router = APIRouter()
 
 def _login_error_redirect(message: str) -> RedirectResponse:
     return RedirectResponse(
-        url=f"{settings.frontend_url}/login?error={message}",
+        url=f"{resolved_frontend_url()}/login?error={message}",
     )
 
 
@@ -30,7 +30,7 @@ async def google_login():
     if not settings.google_client_id or not settings.google_client_secret:
         raise HTTPException(status_code=500, detail="Google OAuth is not configured on the server")
 
-    if not settings.google_redirect_uri:
+    if not resolved_google_redirect_uri():
         raise HTTPException(status_code=500, detail="GOOGLE_REDIRECT_URI is not configured")
 
     flow = get_google_oauth_flow()
@@ -117,7 +117,9 @@ async def google_callback(
             return _login_error_redirect("user_save_failed")
 
         token = create_access_token({"user_id": user.id, "email": user.email})
-        redirect_url = f"{settings.frontend_url}/auth/callback?token={token}"
+        frontend = resolved_frontend_url()
+        logger.info("OAuth success — redirecting to %s", frontend)
+        redirect_url = f"{frontend}/auth/callback?token={token}"
         return RedirectResponse(url=redirect_url)
 
     except Exception:

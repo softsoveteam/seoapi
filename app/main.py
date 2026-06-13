@@ -9,7 +9,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.config import settings
+from app.config import LIVE_FRONTEND_URL, settings
 from app.jobs.scheduler import start_scheduler, stop_scheduler
 from app.routers import auth, dashboard, groups, keywords, reports, sites, sync
 
@@ -31,6 +31,7 @@ app = FastAPI(title="SEOSOFT API", version="1.0.0", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
+        LIVE_FRONTEND_URL,
         settings.frontend_url,
         "http://localhost:3000",
         "https://8.softsove.life",
