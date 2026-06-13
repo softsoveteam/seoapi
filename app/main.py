@@ -1,4 +1,9 @@
 import logging
+import os
+
+# Google OAuth may return expanded scopes; avoid oauthlib raising on scope mismatch.
+os.environ.setdefault("OAUTHLIB_RELAX_TOKEN_SCOPE", "1")
+
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
