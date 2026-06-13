@@ -7,13 +7,13 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+asyncpg://seosoft:seosoft@localhost:5432/seosoft"
     google_client_id: str = ""
     google_client_secret: str = ""
-    google_redirect_uri: str = "http://localhost:8000/api/auth/callback"
+    google_redirect_uri: str = "https://8.softsove.life/api/auth/callback"
     jwt_secret: str = "change-me-in-production"
     jwt_algorithm: str = "HS256"
     jwt_expire_minutes: int = 60 * 24 * 7  # 7 days
     mistral_api_key: str = ""
     mistral_model: str = "mistral-large-latest"
-    frontend_url: str = "http://localhost:3000"
+    frontend_url: str = "https://8.softsove.life"
     sync_hour: int = 6
     trend_threshold_percent: float = 5.0
 
