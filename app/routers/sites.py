@@ -1,5 +1,7 @@
 from datetime import datetime, timedelta
 
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -16,6 +18,8 @@ from app.schemas import (
     TrackKeywordsRequest,
 )
 from app.services.sync_service import get_site_with_trend, sync_sites_for_user, sync_site_keywords, sync_site_metrics
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -35,8 +39,14 @@ async def sync_sites_from_gsc(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    count = await sync_sites_for_user(db, user)
-    return {"synced": count, "message": f"Synced {count} new sites from Search Console"}
+    try:
+        count = await sync_sites_for_user(db, user)
+        return {"synced": count, "message": f"Synced {count} new sites from Search Console"}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.exception("Site sync failed for user %s", user.id)
+        raise HTTPException(status_code=500, detail=f"Site sync failed: {e}")
 
 
 @router.get("/{site_id}", response_model=SiteResponse)
@@ -86,10 +96,16 @@ async def sync_single_site(
     if not site:
         raise HTTPException(status_code=404, detail="Site not found")
 
-    metrics_count = await sync_site_metrics(db, site, user)
-    keywords_count = await sync_site_keywords(db, site, user)
-    return {
-        "metrics_synced": metrics_count,
-        "keyword_snapshots_synced": keywords_count,
-        "last_synced_at": site.last_synced_at,
-    }
+    try:
+        metrics_count = await sync_site_metrics(db, site, user)
+        keywords_count = await sync_site_keywords(db, site, user)
+        return {
+            "metrics_synced": metrics_count,
+            "keyword_snapshots_synced": keywords_count,
+            "last_synced_at": site.last_synced_at,
+        }
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.exception("Single site sync failed for site %s", site_id)
+        raise HTTPException(status_code=500, detail=f"Site sync failed: {e}")

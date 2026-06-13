@@ -37,10 +37,16 @@ logger = logging.getLogger(__name__)
 async def sync_sites_for_user(db: AsyncSession, user: User) -> int:
     creds = get_credentials_for_user(user)
     if not creds:
-        raise ValueError("No valid Google credentials")
+        raise ValueError(
+            "Google credentials missing or expired. Please sign out and sign in again with Google."
+        )
 
-    service = build_search_console_service(creds)
-    gsc_sites = list_verified_sites(service)
+    try:
+        service = build_search_console_service(creds)
+        gsc_sites = list_verified_sites(service)
+    except Exception as e:
+        logger.exception("GSC sites.list failed for user %s", user.id)
+        raise ValueError(f"Search Console API error: {e}") from e
 
     count = 0
     for entry in gsc_sites:
