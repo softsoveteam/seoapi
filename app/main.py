@@ -25,7 +25,11 @@ app = FastAPI(title="SEOSOFT API", version="1.0.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.frontend_url, "http://localhost:3000"],
+    allow_origins=[
+        settings.frontend_url,
+        "http://localhost:3000",
+        "https://8.softsove.life",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
